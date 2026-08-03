@@ -102,7 +102,7 @@ async def run_automation_now(_: str = Header(default=None, alias="Authorization"
     return result
 
 def require_scheduler_token(x_scheduler_token: str | None) -> None:
-    expected = os.getenv("SCHEDULER_TOKEN", "")
+    expected = os.getenv("AUTOMATION_SCHEDULER_TOKEN", "") or os.getenv("SCHEDULER_TOKEN", "")
     if not expected or not x_scheduler_token or not hmac.compare_digest(expected, x_scheduler_token):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 

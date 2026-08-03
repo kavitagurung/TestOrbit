@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Check owner-configured collection schedule
         env:
-          SCHEDULER_TOKEN: ${{ secrets.TESTORBIT_SCHEDULER_TOKEN_V2 }}
+          SCHEDULER_TOKEN: ${{ secrets.TESTORBIT_AUTOMATION_SCHEDULER_TOKEN }}
         run: |
           curl --fail --silent --show-error \
             -X POST https://testorbit-api.onrender.com/api/v1/admin/collect/scheduled \
