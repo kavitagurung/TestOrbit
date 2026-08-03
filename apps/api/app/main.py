@@ -1,9 +1,18 @@
 from datetime import date
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from .intelligence import classify_claim, importance_score, weighted_score
+from .live_intelligence import EvidenceSignal, today_summary
 
 app = FastAPI(title="TestOrbit API", version="0.1.0", description="Synthetic demo API. No confidential data.")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://kavitagurung.github.io", "http://localhost:5173"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
+)
 
 class Health(BaseModel):
     status: str = "ok"
@@ -46,3 +55,12 @@ def claim_lens(text: str, documented: bool = False, implementation_evidence: boo
 @app.get("/api/v1/scores/example", tags=["intelligence"])
 def scores_example() -> dict[str, object]:
     return {"strategic_importance": importance_score(90, 90, 70, 80, 80, 95), "threat": weighted_score({"capability_overlap": 80, "evidence": 90, "urgency": 75}), "opportunity": weighted_score({"customer_pain": 80, "alignment": 90, "differentiation": 85})}
+
+@app.get("/api/v1/intelligence/today", tags=["intelligence"])
+def get_today_intelligence() -> dict[str, object]:
+    """Verified current signals with separate facts, inference, and citations."""
+    return today_summary()
+
+@app.get("/api/v1/intelligence/signals", response_model=list[EvidenceSignal], tags=["intelligence"])
+def get_verified_intelligence_signals() -> list[EvidenceSignal]:
+    return today_summary()["signals"]  # type: ignore[return-value]
