@@ -130,10 +130,10 @@ async def collect_daily_changes(x_scheduler_token: str | None = Header(default=N
     return await run_daily_collection(send_slack=True)
 
 @app.post("/api/v1/admin/collect/scheduled", tags=["collection"])
-async def collect_scheduled_changes(authorization: str | None = Header(default=None, alias="Authorization")) -> dict[str, object]:
+async def collect_scheduled_changes(force: bool = False, authorization: str | None = Header(default=None, alias="Authorization")) -> dict[str, object]:
     verify_scheduler_oidc(authorization)
     due, schedule = collection_due()
-    if not due:
+    if not due and not force:
         return {"ran": False, "reason": "Not due", "schedule": schedule_payload(schedule)}
     result = await run_daily_collection(send_slack=schedule.slack_enabled)
     mark_collected()
