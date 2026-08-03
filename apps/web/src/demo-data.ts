@@ -1,22 +1,38 @@
 export type Signal = { id: string; vendor: string; title: string; category: string; date: string; confidence: number; status: string; score: number; excerpt: string }
+export type Competitor = { name: string; category: string; focus: string; website: string; changed: number; sourceHealth: 'Healthy' | 'Not checked' }
+export type Insight = { id: string; subject: string; subjectType: 'Enterprise Application' | 'Competitor'; category: string; headline: string; fact: string; inference: string; recommendation: string; sourceName: string; sourceUrl: string; publishedAt: string; firstDetectedAt: string; lastVerifiedAt: string; confidence: number; evidenceStatus: string; capabilities: string[] }
+export type ReleaseItem = { id: string; platform: 'Workday' | 'ServiceNow' | 'SAP SuccessFactors'; title: string; family: string; publishedAt: string; firstDetectedAt: string; lastVerifiedAt: string; category: string; summary: string; changes: string; impact: string; areas: string; confidence: number; evidenceStatus: string; sourceName: string; sourceUrl: string; sourceHealth: string }
 
 export const signals: Signal[] = [
-  { id: 'sig-001', vendor: 'NovaTest', title: 'Announced guided AI test planning', category: 'New AI capability', date: '2026-07-30', confidence: 92, status: 'Confirmed by official announcement', score: 88, excerpt: 'Synthetic release note describes guided test-plan generation with human review.' },
-  { id: 'sig-002', vendor: 'VerityQA', title: 'Added synthetic Workday coverage', category: 'New ERP support', date: '2026-07-27', confidence: 84, status: 'Confirmed by official documentation', score: 81, excerpt: 'Synthetic documentation now lists Workday among enterprise application examples.' },
-  { id: 'sig-003', vendor: 'OrbitSpec', title: 'Changed trial messaging', category: 'Trial change', date: '2026-07-24', confidence: 68, status: 'Official marketing claim only', score: 56, excerpt: 'Synthetic pricing page changed from “start free” to “request access”.' },
-  { id: 'sig-004', vendor: 'NovaTest', title: 'Published CI workflow connector', category: 'New integration', date: '2026-07-21', confidence: 89, status: 'Confirmed by official documentation', score: 76, excerpt: 'Synthetic integration guide describes pipeline-result artifacts.' },
+  { id: 'sig-001', vendor: 'NovaTest', title: 'Announced guided AI test planning', category: 'New AI capability', date: '2026-07-30', confidence: 92, status: 'Synthetic demo evidence', score: 88, excerpt: 'Synthetic release note describes guided test-plan generation with human review.' },
+  { id: 'sig-002', vendor: 'VerityQA', title: 'Added synthetic Workday coverage', category: 'New ERP support', date: '2026-07-27', confidence: 84, status: 'Synthetic demo evidence', score: 81, excerpt: 'Synthetic documentation now lists Workday among enterprise application examples.' },
+  { id: 'sig-003', vendor: 'OrbitSpec', title: 'Changed trial messaging', category: 'Trial change', date: '2026-07-24', confidence: 68, status: 'Synthetic demo evidence', score: 56, excerpt: 'Synthetic pricing page changed from “start free” to “request access”.' },
+  { id: 'sig-004', vendor: 'NovaTest', title: 'Published CI workflow connector', category: 'New integration', date: '2026-07-21', confidence: 89, status: 'Synthetic demo evidence', score: 76, excerpt: 'Synthetic integration guide describes pipeline-result artifacts.' },
 ]
 
-export const competitors = [
-  { name: 'NovaTest', category: 'AI-native competitor', focus: 'Enterprise web and API testing', changed: 3 },
-  { name: 'VerityQA', category: 'ERP specialist', focus: 'Business-process assurance', changed: 2 },
-  { name: 'OrbitSpec', category: 'Enterprise competitor', focus: 'Cross-application quality', changed: 1 },
+const grouped = [
+  ['Direct competitors', ['Opkey', 'UiPath', 'Functionize', 'testRigor', 'Tricentis Tosca', 'Tricentis Testim']],
+  ['Enterprise and ERP competitors', ['Worksoft', 'Leapwork', 'Panaya', 'Qualibrate', 'Provar', 'Copado Robotic Testing']],
+  ['AI-native competitors', ['ACCELQ', 'Testsigma', 'mabl', 'KaneAI', 'Avo Automation', 'Autify', 'Momentic']],
+  ['Testing infrastructure', ['BrowserStack', 'Sauce Labs', 'SmartBear TestComplete', 'OpenText UFT One', 'Ranorex', 'Perfecto', 'Kobiton', 'TestGrid', 'Keysight Eggplant', 'LambdaTest', 'Applitools']],
+  ['Specialist platforms', ['Katalon', 'Virtuoso', 'Reflect', 'Rainforest QA', 'QA Wolf']],
+  ['Developer-first market signals', ['Playwright', 'Cypress', 'Selenium', 'Appium', 'Puppeteer']],
+] as const
+
+const slugs: Record<string, string> = { 'UiPath': 'https://www.uipath.com/', 'testRigor': 'https://testrigor.com/', 'Tricentis Tosca': 'https://www.tricentis.com/products/automate-continuous-testing-tosca', 'Tricentis Testim': 'https://www.tricentis.com/products/testim', 'OpenText UFT One': 'https://www.opentext.com/products/uft-one', 'Keysight Eggplant': 'https://www.keysight.com/us/en/product/eggplant.html', 'QA Wolf': 'https://www.qawolf.com/' }
+export const competitors: Competitor[] = grouped.flatMap(([category, names]) => names.map((name) => ({ name, category, focus: category === 'Developer-first market signals' ? 'Market-signal framework' : 'Test automation', website: slugs[name] || `https://${name.toLowerCase().replaceAll(' ', '').replaceAll('.', '')}.com/`, changed: 0, sourceHealth: 'Not checked' })))
+
+export const releaseItems: ReleaseItem[] = [
+  { id: 'wd-agent-passport', platform: 'Workday', title: 'Workday Launches Agent Passport to Test, Verify, and Continuously Monitor Every AI Agent in the Enterprise', family: 'Early access H2 2026; GA projected before end of 2026', publishedAt: '2026-06-02', firstDetectedAt: '2026-08-01', lastVerifiedAt: '2026-08-01', category: 'AI announcement', summary: 'Workday announced Agent Passport for testing, verifying, and continuously monitoring Workday-built and third-party AI agents.', changes: 'Agent testing attestations and runtime monitoring are described; availability is early access, not a Workday application release.', impact: 'Inference: teams using Workday agent workflows may need coverage for agent approvals, policy enforcement, and runtime exception paths.', areas: 'AI agents, HR, finance, IT', confidence: 98, evidenceStatus: 'Verified official source', sourceName: 'Workday Newsroom', sourceUrl: 'https://newsroom.workday.com/2026-06-02-Workday-Launches-Agent-Passport-to-Test%2C-Verify%2C-and-Continuously-Monitor-Every-AI-Agent-in-the-Enterprise', sourceHealth: 'Healthy' },
+  { id: 'sn-australia', platform: 'ServiceNow', title: 'What’s New in the Australia Release', family: 'Australia', publishedAt: '2026-07-29', firstDetectedAt: '2026-08-01', lastVerifiedAt: '2026-08-01', category: 'Major release', summary: 'ServiceNow describes the Australia release as adding AI agents, platform governance, and workflow capabilities.', changes: 'Official page highlights AI Agent Studio, Process Mining, and governance changes.', impact: 'Inference: validate affected workflow, Now Assist, IntegrationHub, and UI regression paths in the target family.', areas: 'AI agents, workflows, governance', confidence: 91, evidenceStatus: 'Verified official source', sourceName: 'ServiceNow', sourceUrl: 'https://www.servicenow.com/platform/latest-release.html', sourceHealth: 'Healthy' },
+  { id: 'sap-ux', platform: 'SAP SuccessFactors', title: 'SAP User Experience Updates Now Available in All Systems', family: '1H 2026', publishedAt: '2026-04-03', firstDetectedAt: '2026-08-01', lastVerifiedAt: '2026-08-01', category: 'User-interface change', summary: 'SAP states that user-experience updates previously available in Preview are available in Production and Preview systems.', changes: 'Shell bar, navigation menu, search, notifications, user menu, and settings are affected.', impact: 'Inference: revalidate navigation and selector baselines before broadening production regression coverage.', areas: 'Platform UX, navigation, notifications', confidence: 96, evidenceStatus: 'Verified official source', sourceName: 'SAP Help Portal', sourceUrl: 'https://help.sap.com/docs/successfactors-release-information/8e0d540f96474717bbf18df51e54e522/458a7525490f4848a71f9ee562ecefcd.html', sourceHealth: 'Healthy' },
 ]
+
+export const insights: Insight[] = releaseItems.map((item) => ({ id: item.id, subject: item.platform, subjectType: 'Enterprise Application', category: item.category, headline: item.title, fact: item.summary, inference: item.impact, recommendation: 'Review the official evidence, identify affected tenant workflows, and validate in an approved non-production environment.', sourceName: item.sourceName, sourceUrl: item.sourceUrl, publishedAt: item.publishedAt, firstDetectedAt: item.firstDetectedAt, lastVerifiedAt: item.lastVerifiedAt, confidence: item.confidence, evidenceStatus: item.evidenceStatus, capabilities: item.areas.split(', ') }))
 
 export const matrix = [
-  ['Natural-language test creation', 'Confirmed', 'Partial', 'Announced'],
-  ['Workday', 'Unknown', 'Confirmed', 'Requires validation'],
-  ['Self-healing selectors', 'Confirmed', 'Partial', 'Not found'],
-  ['GitHub Actions', 'Confirmed', 'Partial', 'Confirmed'],
+  ['Natural-language test creation', 'Requires official-source verification', 'Requires official-source verification', 'Requires official-source verification'],
+  ['Workday', 'No verified update in selected period', 'No verified update in selected period', 'No verified update in selected period'],
+  ['Self-healing selectors', 'Requires official-source verification', 'Requires official-source verification', 'No verified update in selected period'],
+  ['GitHub Actions', 'Requires official-source verification', 'Requires official-source verification', 'Requires official-source verification'],
 ]
-

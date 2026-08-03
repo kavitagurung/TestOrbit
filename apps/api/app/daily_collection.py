@@ -13,6 +13,9 @@ INITIAL_SOURCES = [
     {"competitor": "Opkey", "product": "Opkey", "name": "Opkey newsroom", "url": "https://www.opkey.com/news", "source_type": "blog"},
     {"competitor": "Coupa", "product": "Coupa Supplier Portal", "name": "Coupa Supplier Portal release notes", "url": "https://docs.coupa.com/en/supplier-documentation/coupa-for-suppliers/announcements-and-general-information/coupa-supplier-portal-release-notes", "source_type": "documentation"},
     {"competitor": "Workday", "product": "Workday", "name": "Workday product releases and innovation", "url": "https://www.workday.com/en-us/products/releases-and-innovation.html", "source_type": "documentation"},
+    {"competitor": "Workday", "product": "Workday", "name": "Workday newsroom", "url": "https://newsroom.workday.com/", "source_type": "blog"},
+    {"competitor": "ServiceNow", "product": "ServiceNow AI Platform", "name": "ServiceNow latest release", "url": "https://www.servicenow.com/platform/latest-release.html", "source_type": "release_notes"},
+    {"competitor": "SAP SuccessFactors", "product": "SAP SuccessFactors", "name": "SAP SuccessFactors release information", "url": "https://help.sap.com/docs/successfactors-release-information", "source_type": "release_notes"},
 ]
 
 def ensure_initial_sources() -> None:
