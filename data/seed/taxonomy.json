@@ -1,0 +1,9 @@
+{
+  "Test authoring": ["Browser recording", "Natural-language test creation", "AI-generated test cases", "No-code authoring", "Full-code extensibility"],
+  "Execution": ["Web testing", "Mobile testing", "API testing", "ERP testing", "Cloud execution", "Parallel execution"],
+  "Enterprise application coverage": ["Workday", "SAP", "Oracle Fusion", "Salesforce", "Coupa", "SuccessFactors"],
+  "Test maintenance": ["Self-healing selectors", "Change-impact analysis", "Human approval for healing"],
+  "CI/CD and integrations": ["GitHub Actions", "Jenkins", "Azure DevOps", "MCP", "Public APIs"],
+  "AI and agentic capabilities": ["AI test generation", "AI failure diagnosis", "Agentic test maintenance", "AI-agent testing", "Explainable AI decisions"]
+}
+

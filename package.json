@@ -1,0 +1,13 @@
+{
+  "name": "testorbit",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["apps/web"],
+  "scripts": {
+    "dev": "npm run dev --workspace=@testorbit/web",
+    "build": "npm run build --workspace=@testorbit/web",
+    "test": "npm run test --workspace=@testorbit/web",
+    "lint": "npm run lint --workspace=@testorbit/web"
+  }
+}
+

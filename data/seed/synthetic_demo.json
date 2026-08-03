@@ -1,0 +1,9 @@
+{
+  "disclaimer": "All competitors, products, sources and evidence in this file are fictional synthetic demo data.",
+  "product_profile": {"name": "Aster QA", "description": "Fictional enterprise test automation product", "strategic_themes": ["human-approved AI", "ERP confidence"]},
+  "competitors": [
+    {"name": "NovaTest", "official_product_name": "NovaTest", "category": "AI-native competitor", "source_url": "https://demo.testorbit.invalid/novatest", "verified_on": "2026-08-01"},
+    {"name": "VerityQA", "official_product_name": "VerityQA", "category": "ERP specialist", "source_url": "https://demo.testorbit.invalid/verityqa", "verified_on": "2026-08-01"}
+  ]
+}
+
