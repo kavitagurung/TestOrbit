@@ -10,6 +10,18 @@ export const signals: Signal[] = [
   { id: 'sig-004', vendor: 'NovaTest', title: 'Published CI workflow connector', category: 'New integration', date: '2026-07-21', confidence: 89, status: 'Synthetic demo evidence', score: 76, excerpt: 'Synthetic integration guide describes pipeline-result artifacts.' },
 ]
 
+export type RecentCompetitorUpdate = { id: string; vendor: string; category: string; date: string; title: string; summary: string; sourceName: string; sourceUrl: string; evidenceStatus: string }
+
+// Official competitor publications only. These entries are deliberately kept
+// separate from synthetic demo data and link directly to the publisher.
+export const recentCompetitorUpdates: RecentCompetitorUpdate[] = [
+  { id: 'functionize-studio', vendor: 'Functionize', category: 'Product release', date: '2026-07-16', title: 'Functionize Studio is generally available', summary: 'Functionize describes Studio as an adversarial agent for proving software quality at agent speed.', sourceName: 'Functionize official blog', sourceUrl: 'https://www.functionize.com/blog/meet-functionize-studio', evidenceStatus: 'Verified official source' },
+  { id: 'uipath-agents-july', vendor: 'UiPath', category: 'AI capability', date: '2026-07-24', title: 'New assignment criteria for agent escalations', summary: 'UiPath documents workload, group, round-robin, and LLM-inferred routing options for agent escalations.', sourceName: 'UiPath Agents release notes', sourceUrl: 'https://docs.uipath.com/agents/automation-cloud/latest/release-notes/july-2026', evidenceStatus: 'Verified official source' },
+  { id: 'uipath-test-manager', vendor: 'UiPath', category: 'Preview capability', date: '2026-07-15', title: 'Test with Coding Agents is listed as preview', summary: 'UiPath documents terminal-driven access to Test Manager test cases, results, coverage, and test-set execution.', sourceName: 'UiPath July release notes', sourceUrl: 'https://docs.uipath.com/release-notes/other/latest/release-notes/cloud-platform-july-2026', evidenceStatus: 'Verified official source' },
+  { id: 'tricentis-tosca', vendor: 'Tricentis', category: 'Product update', date: 'July 2026', title: 'Generate API messages with a prompt', summary: 'Tosca Cloud’s July release notes describe prompt-based API-message generation through MCP.', sourceName: 'Tricentis Tosca Cloud release notes', sourceUrl: 'https://docs.tricentis.com/tosca-cloud/en-us/content/release_notes/release_notes.htm', evidenceStatus: 'Verified official source' },
+  { id: 'opkey-workday-ai', vendor: 'Opkey', category: 'Official market update', date: '2026-07-09', title: 'Opkey published its view on AI-enabled Workday testing', summary: 'Opkey’s official blog describes its perspective on AI-driven Workday testing and ERP lifecycle testing.', sourceName: 'Opkey official blog', sourceUrl: 'https://www.opkey.com/blog/leveraging-ai-in-workday-testing-ensuring-quality-and-efficiency', evidenceStatus: 'Official publication — positioning claim' },
+]
+
 const grouped = [
   ['Direct competitors', ['Opkey', 'UiPath', 'Functionize', 'testRigor', 'Tricentis Tosca', 'Tricentis Testim']],
   ['Enterprise and ERP competitors', ['Worksoft', 'Leapwork', 'Panaya', 'Qualibrate', 'Provar', 'Copado Robotic Testing']],
