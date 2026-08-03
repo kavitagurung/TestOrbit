@@ -11,6 +11,7 @@ from .slack_delivery import post_slack_notification
 from .database import init_database
 from .daily_collection import run_daily_collection
 from .automation import collection_due, get_schedule, mark_collected, require_owner, update_schedule
+from .github_oidc import verify_scheduler_oidc
 
 app = FastAPI(title="TestOrbit API", version="0.1.0", description="Synthetic demo API. No confidential data.")
 app.add_middleware(
@@ -129,8 +130,8 @@ async def collect_daily_changes(x_scheduler_token: str | None = Header(default=N
     return await run_daily_collection(send_slack=True)
 
 @app.post("/api/v1/admin/collect/scheduled", tags=["collection"])
-async def collect_scheduled_changes(x_scheduler_token: str | None = Header(default=None)) -> dict[str, object]:
-    require_scheduler_token(x_scheduler_token)
+async def collect_scheduled_changes(authorization: str | None = Header(default=None, alias="Authorization")) -> dict[str, object]:
+    verify_scheduler_oidc(authorization)
     due, schedule = collection_due()
     if not due:
         return {"ran": False, "reason": "Not due", "schedule": schedule_payload(schedule)}

@@ -10,11 +10,16 @@ on:
 jobs:
   collect:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Check owner-configured collection schedule
-        env:
-          SCHEDULER_TOKEN: ${{ secrets.TESTORBIT_AUTOMATION_SCHEDULER_TOKEN }}
         run: |
+          OIDC_TOKEN="$(curl --fail --silent --show-error \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=testorbit-scheduler" | jq --raw-output '.value')"
+          test -n "${OIDC_TOKEN}" && test "${OIDC_TOKEN}" != "null"
           curl --fail --silent --show-error \
             -X POST https://testorbit-api.onrender.com/api/v1/admin/collect/scheduled \
-            -H "X-Scheduler-Token: ${SCHEDULER_TOKEN}"
+            -H "Authorization: Bearer ${OIDC_TOKEN}"

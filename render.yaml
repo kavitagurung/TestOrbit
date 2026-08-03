@@ -25,5 +25,9 @@ services:
         sync: false
       - key: SCHEDULER_TOKEN
         sync: false
+      - key: GITHUB_OIDC_AUDIENCE
+        value: testorbit-scheduler
+      - key: GITHUB_OIDC_REPOSITORY
+        value: kavitagurung/TestOrbit
       - key: MCP_API_TOKEN
         generateValue: true
