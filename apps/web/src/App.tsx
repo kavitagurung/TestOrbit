@@ -14,7 +14,7 @@ type AutomationSchedule = { time: string; frequency: 'daily' | 'weekdays' | 'wee
 type SharedSchedule = { frequency: AutomationSchedule['frequency']; day_of_week: string; time_ist: string; slack_enabled: boolean; last_run_date: string | null; timezone: string }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return <div className="shell"><aside><div className="brand"><span className="orbit" /> TEST<span>ORBIT</span></div><p className="workspace">RESEARCH WORKSPACE</p><nav>{nav.map(([to, label]) => <NavLink key={to} to={to} end={to === '/'}>{label}</NavLink>)}</nav><div className="security-note">Official sources and seeded sample signals are labelled separately. Evidence and inference are deliberately separated.</div></aside><main><header><div><p className="eyebrow">TODAY · 01 AUG 2026</p><h1>Competitive intelligence, grounded in evidence.</h1></div><button className="quiet">Evidence-first</button></header>{children}</main></div>
+  return <div className="shell"><aside><div className="brand"><span className="orbit" /> TEST<span>ORBIT</span></div><p className="workspace">RESEARCH WORKSPACE</p><nav>{nav.map(([to, label]) => <NavLink key={to} to={to} end={to === '/'}>{label}</NavLink>)}</nav><div className="security-note">Official sources and seeded sample signals are labelled separately. Evidence and inference are deliberately separated.</div></aside><main><header><div><p className="eyebrow">YOUR DAILY RECAP · EVIDENCE-FIRST</p><h1>Hi, good morning Kavita.<br />Here’s your daily recap of what’s happening in the test automation industry.</h1></div><button className="quiet">Evidence-first</button></header>{children}</main></div>
 }
 
 function LiveBriefPanel() {
