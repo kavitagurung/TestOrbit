@@ -7,6 +7,13 @@ from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, create_engin
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./testorbit.db")
+# Supabase supplies a generic PostgreSQL URL. Select the installed psycopg v3
+# dialect explicitly so SQLAlchemy does not fall back to the unavailable
+# psycopg2 driver during Render startup.
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 engine_args = {"connect_args": {"check_same_thread": False}} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, future=True, **engine_args)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
@@ -47,4 +54,3 @@ def session_scope():
         raise
     finally:
         session.close()
-
