@@ -8,6 +8,8 @@ from .intelligence import classify_claim, importance_score, weighted_score
 from .live_intelligence import EvidenceSignal, today_summary
 from .delivery import post_teams_notification
 from .slack_delivery import post_slack_notification
+from .database import init_database
+from .daily_collection import run_daily_collection
 
 app = FastAPI(title="TestOrbit API", version="0.1.0", description="Synthetic demo API. No confidential data.")
 app.add_middleware(
@@ -17,6 +19,10 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
+
+@app.on_event("startup")
+def initialize_storage() -> None:
+    init_database()
 
 class Health(BaseModel):
     status: str = "ok"
@@ -89,3 +95,9 @@ async def send_slack_test_notification(x_scheduler_token: str | None = Header(de
     delivered = await post_slack_notification("TestOrbit delivery check", "A protected TestOrbit Slack webhook test was requested.", ["TestOrbit"])
     if not delivered:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Slack webhook is not configured")
+
+@app.post("/api/v1/admin/collect/daily", tags=["collection"])
+async def collect_daily_changes(x_scheduler_token: str | None = Header(default=None)) -> dict[str, object]:
+    """Protected daily collection and digest; only configured public sources are visited."""
+    require_scheduler_token(x_scheduler_token)
+    return await run_daily_collection(send_slack=True)
