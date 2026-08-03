@@ -3,7 +3,7 @@ import os
 from contextlib import contextmanager
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, create_engine
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./testorbit.db")
@@ -39,6 +39,16 @@ class Snapshot(Base):
     excerpt: Mapped[str] = mapped_column(Text)
     collected_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
     source: Mapped[Source] = relationship(back_populates="snapshots")
+
+class AutomationSchedule(Base):
+    """Singleton workspace schedule; protected updates are owner-only."""
+    __tablename__ = "automation_schedules"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    frequency: Mapped[str] = mapped_column(String(20), default="daily")
+    day_of_week: Mapped[str] = mapped_column(String(12), default="Monday")
+    time_ist: Mapped[str] = mapped_column(String(5), default="09:00")
+    slack_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_run_date: Mapped[str | None] = mapped_column(String(10), nullable=True)
 
 def init_database() -> None:
     Base.metadata.create_all(bind=engine)

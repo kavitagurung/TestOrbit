@@ -10,6 +10,7 @@ from .delivery import post_teams_notification
 from .slack_delivery import post_slack_notification
 from .database import init_database
 from .daily_collection import run_daily_collection
+from .automation import collection_due, get_schedule, mark_collected, require_owner, update_schedule
 
 app = FastAPI(title="TestOrbit API", version="0.1.0", description="Synthetic demo API. No confidential data.")
 app.add_middleware(
@@ -17,7 +18,7 @@ app.add_middleware(
     allow_origins=["https://kavitagurung.github.io", "http://localhost:5173"],
     allow_credentials=False,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 @app.on_event("startup")
@@ -36,6 +37,15 @@ class Signal(BaseModel):
     first_detected: date
     confidence: int = Field(ge=0, le=100)
     evidence_status: str
+
+class ScheduleInput(BaseModel):
+    frequency: str = "daily"
+    day_of_week: str = "Monday"
+    time_ist: str = "09:00"
+    slack_enabled: bool = True
+
+def schedule_payload(schedule: object) -> dict[str, object]:
+    return {"frequency": schedule.frequency, "day_of_week": schedule.day_of_week, "time_ist": schedule.time_ist, "slack_enabled": schedule.slack_enabled, "last_run_date": schedule.last_run_date, "timezone": "Asia/Kolkata"}
 
 DEMO_SIGNALS = [
     Signal(id="sig-001", competitor="NovaTest", category="New AI capability", title="Announced guided AI test planning", first_detected=date(2026, 7, 30), confidence=92, evidence_status="Confirmed by official announcement"),
@@ -75,6 +85,22 @@ def get_today_intelligence() -> dict[str, object]:
 def get_verified_intelligence_signals() -> list[EvidenceSignal]:
     return today_summary()["signals"]  # type: ignore[return-value]
 
+@app.get("/api/v1/automation/schedule", tags=["automation"])
+def read_automation_schedule() -> dict[str, object]:
+    return schedule_payload(get_schedule())
+
+@app.put("/api/v1/automation/schedule", tags=["automation"])
+async def save_automation_schedule(payload: ScheduleInput, _: str = Header(default=None, alias="Authorization")) -> dict[str, object]:
+    await require_owner(_)
+    return schedule_payload(update_schedule(payload.frequency, payload.day_of_week, payload.time_ist, payload.slack_enabled))
+
+@app.post("/api/v1/automation/run", tags=["automation"])
+async def run_automation_now(_: str = Header(default=None, alias="Authorization")) -> dict[str, object]:
+    await require_owner(_)
+    result = await run_daily_collection(send_slack=get_schedule().slack_enabled)
+    mark_collected()
+    return result
+
 def require_scheduler_token(x_scheduler_token: str | None) -> None:
     expected = os.getenv("SCHEDULER_TOKEN", "")
     if not expected or not x_scheduler_token or not hmac.compare_digest(expected, x_scheduler_token):
@@ -101,3 +127,13 @@ async def collect_daily_changes(x_scheduler_token: str | None = Header(default=N
     """Protected daily collection and digest; only configured public sources are visited."""
     require_scheduler_token(x_scheduler_token)
     return await run_daily_collection(send_slack=True)
+
+@app.post("/api/v1/admin/collect/scheduled", tags=["collection"])
+async def collect_scheduled_changes(x_scheduler_token: str | None = Header(default=None)) -> dict[str, object]:
+    require_scheduler_token(x_scheduler_token)
+    due, schedule = collection_due()
+    if not due:
+        return {"ran": False, "reason": "Not due", "schedule": schedule_payload(schedule)}
+    result = await run_daily_collection(send_slack=schedule.slack_enabled)
+    mark_collected()
+    return {"ran": True, **result}
