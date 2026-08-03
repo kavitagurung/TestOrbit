@@ -6,6 +6,7 @@ from sqlalchemy import select
 from .collectors import collect_public_page
 from .database import Snapshot, Source, session_scope
 from .intelligence import snapshot_hash
+from .live_intelligence import daily_slack_brief
 from .slack_delivery import post_slack_notification
 
 INITIAL_SOURCES = [
@@ -59,9 +60,6 @@ async def run_daily_collection(send_slack: bool = True) -> dict[str, object]:
             failures.append(source["competitor"])
     delivered = False
     if send_slack:
-        if changes:
-            lines = "\n".join(f"• {change['competitor']}: {change['title']}" for change in changes)
-            delivered = await post_slack_notification("TestOrbit daily change digest", lines, [change["url"] for change in changes])
-        else:
-            delivered = await post_slack_notification("TestOrbit daily change digest", "No newly detected changes in the configured public sources. Baselines and source health were checked.", [])
+        summary, citations = daily_slack_brief(changes)
+        delivered = await post_slack_notification("TestOrbit daily competitive research", summary, citations)
     return {"collected_at": datetime.utcnow().isoformat(), "sources_checked": len(sources), "baselines_created": baselines, "changes": changes, "failed_sources": failures, "slack_delivered": delivered}

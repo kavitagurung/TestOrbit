@@ -61,6 +61,59 @@ VERIFIED_SIGNALS = [
     ),
 ]
 
+# These are official, public release-watch references.  A publication can
+# indicate where regression attention is prudent, but it cannot prove that a
+# selector has changed in a customer's authenticated tenant.
+ENTERPRISE_RELEASE_WATCH = [
+    {
+        "vendor": "Workday",
+        "update": "Agent Passport was announced for testing, verifying, and continuously monitoring enterprise AI agents.",
+        "impact": "Potential test impact: review agent approvals, policy enforcement, and runtime exception paths. No selector change is confirmed from the public announcement.",
+        "url": "https://newsroom.workday.com/2026-06-02-Workday-Launches-Agent-Passport-to-Test%2C-Verify%2C-and-Continuously-Monitor-Every-AI-Agent-in-the-Enterprise",
+    },
+    {
+        "vendor": "Coupa",
+        "update": "Coupa Supplier Portal release notes are under active release watch.",
+        "impact": "Potential selector risk: when a relevant portal release is detected, revalidate impacted UI paths in an approved tenant. Public monitoring alone cannot confirm a selector change.",
+        "url": "https://docs.coupa.com/en/supplier-documentation/coupa-for-suppliers/announcements-and-general-information/coupa-supplier-portal-release-notes",
+    },
+]
+
+def daily_slack_brief(changes: list[dict[str, str]]) -> tuple[str, list[str]]:
+    """Create an understandable, evidence-linked daily Slack briefing."""
+    uipath, opkey = VERIFIED_SIGNALS
+    workday, coupa = ENTERPRISE_RELEASE_WATCH
+    detected = "No newly detected source-content changes since the last run. The latest verified intelligence is below."
+    if changes:
+        detected = "New source-content changes were detected today: " + "; ".join(
+            f"{change['competitor']} — {change['title']}" for change in changes
+        )
+    summary = "\n".join([
+        "Hi Kavita 👋",
+        "*Your daily competitive research and analysis is ready.*",
+        "",
+        "*New in test automation*",
+        f"• *UiPath* — {uipath.summary} _Published 15 Jul 2026; verified official release notes._",
+        f"• *Opkey* — {opkey.summary} _Official positioning claim; implementation details still require validation._",
+        "",
+        "*Enterprise release watch*",
+        f"• *Workday* — {workday['update']} {workday['impact']}",
+        f"• *Coupa* — {coupa['update']} {coupa['impact']}",
+        "",
+        "*Today’s collection result*",
+        detected,
+        "",
+        "_Evidence links are included below. TestOrbit labels potential UI/selector impact as an inference until it is verified in an authorized test environment._",
+    ])
+    citations = [
+        str(uipath.source_url),
+        str(opkey.source_url),
+        workday["url"],
+        coupa["url"],
+        *[change["url"] for change in changes],
+    ]
+    return summary, citations
+
 def today_summary(today: date = date.today()) -> dict[str, object]:
     today_signals = [signal for signal in VERIFIED_SIGNALS if signal.publication_date == today]
     if not today_signals:
@@ -68,4 +121,3 @@ def today_summary(today: date = date.today()) -> dict[str, object]:
     else:
         headline = f"{len(today_signals)} officially dated competitor release(s) were verified today."
     return {"as_of": today, "headline": headline, "signals": VERIFIED_SIGNALS, "source_scope": "Initial curated official-source coverage: Opkey newsroom and UiPath release notes."}
-
