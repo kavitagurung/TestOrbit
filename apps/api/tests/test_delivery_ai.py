@@ -1,7 +1,8 @@
 import pytest
+from unittest.mock import AsyncMock, patch
 from pydantic import ValidationError
 from app.ai import fallback_interpretation, validate_ai_response
-from app.delivery import teams_payload
+from app.delivery import configured_teams_webhook, post_teams_notification, teams_payload
 from app.mcp import READ_ONLY_TOOLS
 
 def test_fallback_keeps_pipeline_operational() -> None:
@@ -18,3 +19,13 @@ def test_teams_payload_does_not_contain_webhook() -> None:
 def test_mcp_registry_has_no_write_or_fetch_tool() -> None:
     assert all('create' not in tool and 'fetch' not in tool for tool in READ_ONLY_TOOLS)
 
+def test_webhook_requires_trusted_https_host(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv('TEAMS_WEBHOOK_URL', 'http://example.com/hook')
+    assert configured_teams_webhook() is None
+    monkeypatch.setenv('TEAMS_WEBHOOK_URL', 'https://example.logic.azure.com/workflows/test')
+    assert configured_teams_webhook() == 'https://example.logic.azure.com/workflows/test'
+
+@pytest.mark.asyncio
+async def test_no_webhook_means_no_delivery(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv('TEAMS_WEBHOOK_URL', raising=False)
+    assert await post_teams_notification('Title', 'Summary', []) is False

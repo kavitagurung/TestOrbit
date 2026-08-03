@@ -1,9 +1,12 @@
 from datetime import date
-from fastapi import FastAPI
+import hmac
+import os
+from fastapi import FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from .intelligence import classify_claim, importance_score, weighted_score
 from .live_intelligence import EvidenceSignal, today_summary
+from .delivery import post_teams_notification
 
 app = FastAPI(title="TestOrbit API", version="0.1.0", description="Synthetic demo API. No confidential data.")
 app.add_middleware(
@@ -64,3 +67,16 @@ def get_today_intelligence() -> dict[str, object]:
 @app.get("/api/v1/intelligence/signals", response_model=list[EvidenceSignal], tags=["intelligence"])
 def get_verified_intelligence_signals() -> list[EvidenceSignal]:
     return today_summary()["signals"]  # type: ignore[return-value]
+
+def require_scheduler_token(x_scheduler_token: str | None) -> None:
+    expected = os.getenv("SCHEDULER_TOKEN", "")
+    if not expected or not x_scheduler_token or not hmac.compare_digest(expected, x_scheduler_token):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+@app.post("/api/v1/admin/notifications/teams/test", status_code=status.HTTP_204_NO_CONTENT, tags=["notifications"])
+async def send_teams_test_notification(x_scheduler_token: str | None = Header(default=None)) -> None:
+    """Protected diagnostic only; cannot be invoked by public dashboard visitors."""
+    require_scheduler_token(x_scheduler_token)
+    delivered = await post_teams_notification("TestOrbit delivery check", "A protected TestOrbit Teams webhook test was requested.", ["TestOrbit"])
+    if not delivered:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Teams webhook is not configured")
