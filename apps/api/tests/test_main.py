@@ -27,4 +27,5 @@ def test_competitive_analysis_has_feature_leaders_without_api_key(monkeypatch) -
     payload = response.json()
     assert payload['mode'] == 'rule_based_fallback'
     assert payload['feature_leaders']
+    assert payload['recommendations']
     assert all(item['vendors'] for item in payload['feature_leaders'])

@@ -42,6 +42,26 @@ def fallback_analysis(evidence: list[dict[str, str]], range_days: int) -> dict[s
             "Opkey’s item is labelled as positioning rather than a verified new product capability.",
         ],
         "feature_leaders": _feature_leaders(evidence),
+        "recommendations": [
+            {
+                "title": "AI-guided release impact assessment",
+                "market_fit_signal": 78,
+                "rationale": "Multiple public updates emphasise agentic testing, exception handling, or ERP release analysis. A focused workflow that explains release impact and guides regression review has strong visible market alignment.",
+                "evidence_vendors": ["Functionize", "UiPath", "Opkey"],
+            },
+            {
+                "title": "Natural-language API test design",
+                "market_fit_signal": 66,
+                "rationale": "Prompt-based API message creation is appearing in public product updates, indicating demand for reducing manual setup during API test authoring.",
+                "evidence_vendors": ["Tricentis Tosca"],
+            },
+            {
+                "title": "Locator resilience and change evidence",
+                "market_fit_signal": 64,
+                "rationale": "Reliability, object recognition, and release analysis are recurring concerns. A feature that shows before-and-after UI evidence before suggesting a locator fix would be differentiated and directly actionable.",
+                "evidence_vendors": ["SmartBear TestComplete", "Opkey"],
+            },
+        ],
         "evidence": evidence,
     }
 
@@ -73,7 +93,7 @@ async def analyze_competitors(range_days: int = 90) -> dict[str, Any]:
     prompt = (
         "Write a concise competitive-intelligence analysis using only the evidence JSON below. "
         "Do not invent features, dates, availability, customer outcomes, or market trends. "
-        "Keep positioning claims explicitly labelled. Return JSON with keys summary (string) and themes (array of up to 3 strings).\n\n"
+        "Keep positioning claims explicitly labelled. Return JSON with keys summary (string), themes (array of up to 3 strings), and recommendations (array of up to 3 objects with title, market_fit_signal integer 0-100, rationale, and evidence_vendors). A market_fit_signal is only a relative evidence-based opportunity score, never a revenue or success forecast.\n\n"
         + json.dumps(evidence)
     )
     request = {
@@ -89,7 +109,8 @@ async def analyze_competitors(range_days: int = 90) -> dict[str, Any]:
             )
             response.raise_for_status()
         model_result = json.loads(_response_text(response.json()))
-        result = {**baseline, "mode": "openai", "summary": str(model_result["summary"]), "themes": [str(theme) for theme in model_result["themes"][:3]]}
+        recommendations = model_result.get("recommendations", baseline["recommendations"])
+        result = {**baseline, "mode": "openai", "summary": str(model_result["summary"]), "themes": [str(theme) for theme in model_result["themes"][:3]], "recommendations": recommendations[:3]}
         _CACHE[range_days] = (now, result)
         return result
     except (httpx.HTTPError, ValueError, KeyError, TypeError):
