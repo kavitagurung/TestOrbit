@@ -27,24 +27,36 @@ def ensure_initial_sources() -> None:
 async def run_daily_collection(send_slack: bool = True) -> dict[str, object]:
     ensure_initial_sources()
     with session_scope() as session:
-        sources = list(session.scalars(select(Source)).all())
+        # Keep the fields used by the asynchronous collector after the session
+        # closes.  ORM instances expire on commit, so carrying them outside this
+        # block can cause DetachedInstanceError during scheduled runs.
+        sources = [
+            {
+                "id": source.id,
+                "competitor": source.competitor,
+                "name": source.name,
+                "url": source.url,
+                "source_type": source.source_type,
+            }
+            for source in session.scalars(select(Source)).all()
+        ]
     changes: list[dict[str, str]] = []
     failures: list[str] = []
     baselines = 0
     for source in sources:
         try:
-            page = await collect_public_page(source.url, source.source_type)
+            page = await collect_public_page(source["url"], source["source_type"])
             current_hash = snapshot_hash(page["text"])
             with session_scope() as session:
-                latest = session.scalar(select(Snapshot).where(Snapshot.source_id == source.id).order_by(Snapshot.collected_at.desc()))
+                latest = session.scalar(select(Snapshot).where(Snapshot.source_id == source["id"]).order_by(Snapshot.collected_at.desc()))
                 if latest is None:
                     baselines += 1
                 elif latest.content_hash != current_hash:
-                    changes.append({"competitor": source.competitor, "title": f"Public source content changed: {source.name}", "url": source.url})
+                    changes.append({"competitor": source["competitor"], "title": f"Public source content changed: {source['name']}", "url": source["url"]})
                 if latest is None or latest.content_hash != current_hash:
-                    session.add(Snapshot(source_id=source.id, content_hash=current_hash, excerpt=page["text"][:4000]))
+                    session.add(Snapshot(source_id=source["id"], content_hash=current_hash, excerpt=page["text"][:4000]))
         except Exception:
-            failures.append(source.competitor)
+            failures.append(source["competitor"])
     delivered = False
     if send_slack:
         if changes:
