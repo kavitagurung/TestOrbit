@@ -25,7 +25,5 @@ services:
         sync: false
       - key: SCHEDULER_TOKEN
         sync: false
-      - key: AUTOMATION_SCHEDULER_TOKEN
-        sync: false
       - key: MCP_API_TOKEN
         generateValue: true
