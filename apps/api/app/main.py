@@ -3,10 +3,12 @@ import hmac
 import os
 from fastapi import FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from .intelligence import classify_claim, importance_score, weighted_score
 from .live_intelligence import EvidenceSignal, today_summary
 from .competitive_analysis import analyze_competitors
+from .research_assistant import ResearchQuery, stream_answer
 from .delivery import post_teams_notification
 from .slack_delivery import post_slack_notification
 from .database import init_database
@@ -93,6 +95,11 @@ async def get_competitive_analysis(range_days: int = 90) -> dict[str, object]:
     if range_days not in {7, 30, 90}:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="range_days must be 7, 30, or 90")
     return await analyze_competitors(range_days)
+
+@app.post("/api/v1/ask/stream", tags=["research"])
+async def ask_research_assistant(payload: ResearchQuery) -> StreamingResponse:
+    """Stream an evidence-first answer. Facts are composed only from retrieved records."""
+    return StreamingResponse(stream_answer(payload), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 @app.get("/api/v1/automation/schedule", tags=["automation"])
 def read_automation_schedule() -> dict[str, object]:

@@ -29,3 +29,9 @@ def test_competitive_analysis_has_feature_leaders_without_api_key(monkeypatch) -
     assert payload['feature_leaders']
     assert payload['recommendations']
     assert all(item['vendors'] for item in payload['feature_leaders'])
+
+def test_research_assistant_stream_returns_cited_evidence() -> None:
+    response = client.post('/api/v1/ask/stream', json={'question': 'What has UiPath released?', 'period': '90', 'evidence_types': ['Official', 'Documentation'], 'competitors': []})
+    assert response.status_code == 200
+    assert 'event: complete' in response.text
+    assert 'UiPath Agents release notes' in response.text
