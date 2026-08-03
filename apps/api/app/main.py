@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from .intelligence import classify_claim, importance_score, weighted_score
 from .live_intelligence import EvidenceSignal, today_summary
 from .delivery import post_teams_notification
+from .slack_delivery import post_slack_notification
 
 app = FastAPI(title="TestOrbit API", version="0.1.0", description="Synthetic demo API. No confidential data.")
 app.add_middleware(
@@ -80,3 +81,11 @@ async def send_teams_test_notification(x_scheduler_token: str | None = Header(de
     delivered = await post_teams_notification("TestOrbit delivery check", "A protected TestOrbit Teams webhook test was requested.", ["TestOrbit"])
     if not delivered:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Teams webhook is not configured")
+
+@app.post("/api/v1/admin/notifications/slack/test", status_code=status.HTTP_204_NO_CONTENT, tags=["notifications"])
+async def send_slack_test_notification(x_scheduler_token: str | None = Header(default=None)) -> None:
+    """Protected diagnostic only; Slack webhook remains server-side."""
+    require_scheduler_token(x_scheduler_token)
+    delivered = await post_slack_notification("TestOrbit delivery check", "A protected TestOrbit Slack webhook test was requested.", ["TestOrbit"])
+    if not delivered:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Slack webhook is not configured")
