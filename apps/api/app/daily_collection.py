@@ -11,6 +11,8 @@ from .slack_delivery import post_slack_notification
 INITIAL_SOURCES = [
     {"competitor": "UiPath", "product": "UiPath Test Cloud / Test Manager", "name": "UiPath cloud and Test Cloud release notes", "url": "https://docs.uipath.com/release-notes/other/latest/release-notes/cloud-platform-july-2026", "source_type": "release_notes"},
     {"competitor": "Opkey", "product": "Opkey", "name": "Opkey newsroom", "url": "https://www.opkey.com/news", "source_type": "blog"},
+    {"competitor": "Coupa", "product": "Coupa Supplier Portal", "name": "Coupa Supplier Portal release notes", "url": "https://docs.coupa.com/en/supplier-documentation/coupa-for-suppliers/announcements-and-general-information/coupa-supplier-portal-release-notes", "source_type": "documentation"},
+    {"competitor": "Workday", "product": "Workday", "name": "Workday product releases and innovation", "url": "https://www.workday.com/en-us/products/releases-and-innovation.html", "source_type": "documentation"},
 ]
 
 def ensure_initial_sources() -> None:
@@ -48,4 +50,3 @@ async def run_daily_collection(send_slack: bool = True) -> dict[str, object]:
         else:
             delivered = await post_slack_notification("TestOrbit daily change digest", "No newly detected changes in the configured public sources. Baselines and source health were checked.", [])
     return {"collected_at": datetime.utcnow().isoformat(), "sources_checked": len(sources), "baselines_created": baselines, "changes": changes, "failed_sources": failures, "slack_delivered": delivered}
-
