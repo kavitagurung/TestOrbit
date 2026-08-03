@@ -24,6 +24,6 @@ services:
       - key: SLACK_WEBHOOK_URL
         sync: false
       - key: SCHEDULER_TOKEN
-        generateValue: true
+        sync: false
       - key: MCP_API_TOKEN
         generateValue: true
