@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from .intelligence import classify_claim, importance_score, weighted_score
 from .live_intelligence import EvidenceSignal, today_summary
+from .competitive_analysis import analyze_competitors
 from .delivery import post_teams_notification
 from .slack_delivery import post_slack_notification
 from .database import init_database
@@ -85,6 +86,13 @@ def get_today_intelligence() -> dict[str, object]:
 @app.get("/api/v1/intelligence/signals", response_model=list[EvidenceSignal], tags=["intelligence"])
 def get_verified_intelligence_signals() -> list[EvidenceSignal]:
     return today_summary()["signals"]  # type: ignore[return-value]
+
+@app.get("/api/v1/intelligence/competitive-analysis", tags=["intelligence"])
+async def get_competitive_analysis(range_days: int = 90) -> dict[str, object]:
+    """Evidence-grounded analysis; OpenAI is optional and always server-side."""
+    if range_days not in {7, 30, 90}:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="range_days must be 7, 30, or 90")
+    return await analyze_competitors(range_days)
 
 @app.get("/api/v1/automation/schedule", tags=["automation"])
 def read_automation_schedule() -> dict[str, object]:
