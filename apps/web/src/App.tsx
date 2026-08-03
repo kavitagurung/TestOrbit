@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Route, Routes } from 'react-router-dom'
 import { competitors, insights, matrix, recentCompetitorUpdates, releaseItems } from './demo-data'
 import { supabase } from './supabase'
@@ -29,7 +29,29 @@ const inRange = (dateText: string | null | undefined, range: string) => {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return <div className="shell"><aside className="side-nav"><div className="brand"><span className="orbit" /> ORBIT</div><nav><p className="workspace">RESEARCH WORKSPACE</p>{nav.map(([to, label, count]) => <NavLink key={to} to={to} end={to === '/'}><span className={to === '/' ? 'nav-dot' : ''} />{label}{count && <b>{count}</b>}</NavLink>)}</nav><div className="evidence-ledger"><p>EVIDENCE LEDGER</p><div><span>Verified official</span><b>5</b></div><div><span>Marketing claim</span><b>1</b></div><div><span>Synthetic demo</span><b>0</b></div></div><div className="profile"><span>KG</span><div><b>Kavita Gurung</b><small>Research workspace</small></div></div></aside><main><header><div><p className="eyebrow">DAILY RECAP · EVIDENCE-FIRST</p><h1>{greetingForTime()}, Kavita.</h1><p className="header-summary">Here’s your daily recap of what’s happening in the test automation industry. Every signal below separates <b>fact</b> from <i>inference</i>.</p></div><div className="header-actions"><button className="quiet">Last 90 days⌄</button><NavLink className="ask-link" to="/ask">Ask TestOrbit</NavLink></div></header>{children}</main></div>
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const drawerRef = useRef<HTMLElement>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const closeDrawer = () => setDrawerOpen(false)
+  useEffect(() => {
+    if (!drawerOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const focusable = () => Array.from(drawerRef.current?.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),[tabindex]:not([tabindex="-1"])') || [])
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { closeDrawer(); return }
+      if (event.key !== 'Tab') return
+      const items = focusable()
+      if (!items.length) return
+      const first = items[0]; const last = items[items.length - 1]
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+    }
+    const focusTimer = window.setTimeout(() => focusable()[0]?.focus(), 0)
+    document.addEventListener('keydown', handleKeydown)
+    return () => { window.clearTimeout(focusTimer); document.body.style.overflow = previousOverflow; document.removeEventListener('keydown', handleKeydown); menuButtonRef.current?.focus() }
+  }, [drawerOpen])
+  return <div className="shell"><button className={`nav-backdrop ${drawerOpen ? 'visible' : ''}`} aria-label="Close navigation menu" tabIndex={drawerOpen ? 0 : -1} onClick={closeDrawer} /><aside id="primary-navigation" ref={drawerRef} className={`side-nav ${drawerOpen ? 'drawer-open' : ''}`}><div className="drawer-header"><div className="brand"><span className="orbit" /> ORBIT</div><button className="drawer-close" aria-label="Close navigation menu" onClick={closeDrawer}>×</button></div><nav><p className="workspace">RESEARCH WORKSPACE</p>{nav.map(([to, label, count]) => <NavLink key={to} to={to} end={to === '/'} onClick={closeDrawer}><span className={to === '/' ? 'nav-dot' : ''} />{label}{count && <b>{count}</b>}</NavLink>)}</nav><div className="evidence-ledger"><p>EVIDENCE LEDGER</p><div><span>Verified official</span><b>5</b></div><div><span>Marketing claim</span><b>1</b></div><div><span>Synthetic demo</span><b>0</b></div></div><div className="profile"><span>KG</span><div><b>Kavita Gurung</b><small>Research workspace</small></div></div></aside><main><header><button ref={menuButtonRef} className="mobile-menu-toggle" aria-label="Open navigation menu" aria-expanded={drawerOpen} aria-controls="primary-navigation" onClick={() => setDrawerOpen(true)}><span aria-hidden="true">☰</span><span>Menu</span></button><div><p className="eyebrow">DAILY RECAP · EVIDENCE-FIRST</p><h1>{greetingForTime()}, Kavita.</h1><p className="header-summary">Here’s your daily recap of what’s happening in the test automation industry. Every signal below separates <b>fact</b> from <i>inference</i>.</p></div><div className="header-actions"><button className="quiet">Last 90 days⌄</button><NavLink className="ask-link" to="/ask">Ask TestOrbit</NavLink></div></header>{children}</main></div>
 }
 
 function LiveBriefPanel() {
