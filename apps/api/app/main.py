@@ -13,6 +13,7 @@ from .delivery import post_teams_notification
 from .slack_delivery import post_slack_notification
 from .database import init_database
 from .daily_collection import run_daily_collection
+from .market_discovery import discovery_status
 from .automation import collection_due, get_schedule, mark_collected, require_owner, update_schedule
 from .github_oidc import verify_scheduler_oidc
 
@@ -95,6 +96,11 @@ async def get_competitive_analysis(range_days: int = 90) -> dict[str, object]:
     if range_days not in {7, 30, 90}:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="range_days must be 7, 30, or 90")
     return await analyze_competitors(range_days)
+
+@app.get("/api/v1/discovery/status", tags=["discovery"])
+def get_discovery_status() -> dict[str, object]:
+    """Show which opt-in discovery providers are configured; no secrets are exposed."""
+    return discovery_status()
 
 @app.post("/api/v1/ask/stream", tags=["research"])
 async def ask_research_assistant(payload: ResearchQuery) -> StreamingResponse:

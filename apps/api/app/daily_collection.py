@@ -7,6 +7,7 @@ from .collectors import collect_public_page
 from .database import Snapshot, Source, session_scope
 from .intelligence import snapshot_hash
 from .live_intelligence import daily_slack_brief
+from .market_discovery import run_market_discovery
 from .slack_delivery import post_slack_notification
 
 INITIAL_SOURCES = [
@@ -58,8 +59,14 @@ async def run_daily_collection(send_slack: bool = True) -> dict[str, object]:
                     session.add(Snapshot(source_id=source["id"], content_hash=current_hash, excerpt=page["text"][:4000]))
         except Exception:
             failures.append(source["competitor"])
+    discovery = await run_market_discovery()
     delivered = False
     if send_slack:
         summary, citations = daily_slack_brief(changes)
+        candidates = discovery["signals"]
+        if candidates:
+            names = ", ".join(signal["company"] for signal in candidates[:5])
+            summary += f"\n\nMarket discovery candidates (review required): {names}."
+            citations += [signal["url"] for signal in candidates[:5] if signal["url"]]
         delivered = await post_slack_notification("TestOrbit daily competitive research", summary, citations)
-    return {"collected_at": datetime.utcnow().isoformat(), "sources_checked": len(sources), "baselines_created": baselines, "changes": changes, "failed_sources": failures, "slack_delivered": delivered}
+    return {"collected_at": datetime.utcnow().isoformat(), "sources_checked": len(sources), "baselines_created": baselines, "changes": changes, "failed_sources": failures, "market_discovery": discovery, "slack_delivered": delivered}
