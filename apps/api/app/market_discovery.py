@@ -15,6 +15,7 @@ import httpx
 
 PRODUCT_HUNT_ENDPOINT = "https://api.producthunt.com/v2/api/graphql"
 CRUNCHBASE_SEARCH_ENDPOINT = "https://api.crunchbase.com/api/v4/data/searches/organizations"
+X_RECENT_SEARCH_ENDPOINT = "https://api.x.com/2/tweets/search/recent"
 TEST_AUTOMATION_KEYWORDS = (
     "test automation", "automated testing", "software testing", "test management",
     "qa automation", "quality assurance", "self-healing", "playwright", "selenium",
@@ -32,8 +33,40 @@ def discovery_status() -> dict[str, object]:
             "enabled": bool(os.getenv("CRUNCHBASE_API_KEY", "").strip()),
             "requires": "Crunchbase API key with funding-round data access",
         },
+        "x": {
+            "enabled": bool(os.getenv("X_BEARER_TOKEN", "").strip()),
+            "requires": "X developer-app bearer token with recent-search access",
+            "coverage": "Recent public posts only (up to the last seven days)",
+        },
         "policy": "Candidates and financial claims require a source link and remain unverified until reviewed.",
     }
+
+
+def format_x_posts(payload: dict[str, Any]) -> list[dict[str, object]]:
+    """Convert official X API data into attributable, source-linked records."""
+    users = {str(user.get("id")): user for user in payload.get("includes", {}).get("users", [])}
+    records: list[dict[str, object]] = []
+    for post in payload.get("data", []):
+        post_id = str(post.get("id", ""))
+        author = users.get(str(post.get("author_id", "")), {})
+        username = str(author.get("username", ""))
+        if not post_id or not username:
+            continue
+        metrics = post.get("public_metrics") or {}
+        records.append({"id": post_id, "author": username, "text": str(post.get("text", "")), "created_at": str(post.get("created_at", "")), "url": f"https://x.com/{username}/status/{post_id}", "likes": int(metrics.get("like_count", 0)), "reposts": int(metrics.get("retweet_count", 0)), "replies": int(metrics.get("reply_count", 0)), "source": "X API v2 recent search"})
+    return records
+
+
+async def discover_x_posts() -> list[dict[str, object]]:
+    """Retrieve attributable public test-automation discussion through X's API."""
+    token = os.getenv("X_BEARER_TOKEN", "").strip()
+    if not token:
+        return []
+    params = {"query": '("test automation" OR "automated testing" OR "AI testing" OR playwright OR selenium OR "self-healing tests") lang:en -is:retweet', "max_results": 25, "tweet.fields": "created_at,author_id,public_metrics", "expansions": "author_id", "user.fields": "username"}
+    async with httpx.AsyncClient(timeout=15) as client:
+        response = await client.get(X_RECENT_SEARCH_ENDPOINT, params=params, headers={"Authorization": f"Bearer {token}"})
+        response.raise_for_status()
+    return format_x_posts(response.json())
 
 
 def _matches_test_automation(*values: str) -> bool:
@@ -144,4 +177,10 @@ async def run_market_discovery() -> dict[str, object]:
             signals.extend(await discover_crunchbase_funding())
         except Exception:
             failures.append("Crunchbase")
-    return {"status": status, "signals": signals, "failed_providers": failures}
+    x_posts: list[dict[str, object]] = []
+    if status["x"]["enabled"]:  # type: ignore[index]
+        try:
+            x_posts = await discover_x_posts()
+        except Exception:
+            failures.append("X")
+    return {"status": status, "signals": signals, "x_posts": x_posts, "failed_providers": failures}

@@ -68,5 +68,9 @@ async def run_daily_collection(send_slack: bool = True) -> dict[str, object]:
             names = ", ".join(signal["company"] for signal in candidates[:5])
             summary += f"\n\nMarket discovery candidates (review required): {names}."
             citations += [signal["url"] for signal in candidates[:5] if signal["url"]]
+        x_posts = discovery.get("x_posts", [])
+        if x_posts:
+            summary += f"\n\nX discussion watch: {len(x_posts)} sourced test-automation post(s) were found."
+            citations += [str(post["url"]) for post in x_posts[:5] if post.get("url")]
         delivered = await post_slack_notification("TestOrbit daily competitive research", summary, citations)
     return {"collected_at": datetime.utcnow().isoformat(), "sources_checked": len(sources), "baselines_created": baselines, "changes": changes, "failed_sources": failures, "market_discovery": discovery, "slack_delivered": delivered}

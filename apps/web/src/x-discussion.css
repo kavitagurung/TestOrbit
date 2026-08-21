@@ -1,0 +1,7 @@
+.x-watch { margin-bottom: 18px; }
+.x-posts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.x-posts article, .empty-source { border: 1px solid #e2dfd7; background: #faf8f3; border-radius: 9px; padding: 14px; }
+.x-posts article > p { margin: 8px 0; }
+.empty-source { margin-top: 16px; }
+.empty-source p { margin-bottom: 0; }
+@media (max-width: 650px) { .x-posts { grid-template-columns: 1fr; } }

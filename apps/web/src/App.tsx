@@ -2,18 +2,22 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Route, Routes } from 'react-router-dom'
 import { competitors, insights, matrix, recentCompetitorUpdates, releaseItems } from './demo-data'
 import { supabase } from './supabase'
+import './x-discussion.css'
 
 const nav = [['/', 'Market intelligence', ''], ['/competitors', 'Competitors', '40'], ['/matrix', 'Capability matrix', ''], ['/release-watch', 'Release Watch', '4'], ['/automation', 'Automation', ''], ['/claim-lens', 'Claim Lens', '']]
 const badgeClass = (value: string) => value.toLowerCase().replaceAll(' ', '-')
 const LIVE_API = 'https://testorbit-api.onrender.com/api/v1/intelligence/today'
 const COMPETITIVE_ANALYSIS_API = 'https://testorbit-api.onrender.com/api/v1/intelligence/competitive-analysis'
 const ASK_API = 'https://testorbit-api.onrender.com/api/v1/ask/stream'
+const X_DISCUSSION_API = 'https://testorbit-api.onrender.com/api/v1/social/x'
 type LiveSignal = { id: string; competitor: string; title: string; summary: string; evidence_status: string; source_url: string; confidence: number; fact: string; inference?: string; first_detected_date: string; publication_date?: string | null }
 type LiveBrief = { headline: string; signals: LiveSignal[]; source_scope: string }
 type CompetitiveAnalysis = { mode: 'openai' | 'rule_based_fallback'; range_days: number; summary: string; themes: string[]; feature_leaders: { feature: string; vendors: string[]; vendor_count: number }[]; recommendations: { title: string; market_fit_signal: number; rationale: string; evidence_vendors: string[] }[] }
 type ResearchAnswer = { summary: string; verified_facts: { text: string; citation_id: string }[]; analysis: string; missing_evidence: string; confidence: { level: string; reason: string }; sources: { citation_id: string; name: string; type: string; url: string; date_collected: string }[]; timeline: { date: string; vendor: string; event: string; citation_id: string }[]; follow_ups: string[]; cached: boolean }
 type ConversationMessage = { id: string; role: 'user' | 'assistant'; question?: string; answer?: ResearchAnswer; streamingSummary?: string }
 type WorkspaceCompetitor = { name: string; category: string; focus: string; changed: number }
+type XPost = { id: string; author: string; text: string; created_at: string; url: string; likes: number; reposts: number; replies: number }
+type XDiscussion = { enabled: boolean; posts: XPost[]; message: string }
 const COMPETITOR_STORAGE_KEY = 'testorbit-workspace-competitors'
 const ASK_HISTORY_STORAGE_KEY = 'testorbit-research-history'
 type AutomationSchedule = { time: string; frequency: 'daily' | 'weekdays' | 'weekly'; day: string; slack: boolean }
@@ -91,7 +95,13 @@ function RecentCompetitorFeed() {
   const headline = visible.length ? `What changed ${rangeLabel(period)}` : `No tracked competitor updates were published ${rangeLabel(period)}`
   return <section className="panel feed"><div className="panel-heading"><div><p className="eyebrow">RECENT COMPETITOR UPDATES · OFFICIAL SOURCES</p><h2>{headline}</h2><p className="muted">Results update with the selected period. Every item links to the publisher’s official documentation or publication.</p></div><label className="period-label">Date range<select value={period} onChange={(event) => setPeriod(event.target.value)}><option value="today">Today</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="all">All tracked dates</option></select></label></div>{visible.map(update => <article className="signal real-signal" key={update.id}><div className="signal-dot"/><div><p className="signal-meta">{update.vendor} · {update.category} · {update.date}</p><h3>{update.title}</h3><p>{update.summary}</p><span className="badge">{update.evidenceStatus}</span><a href={update.sourceUrl} target="_blank" rel="noreferrer">Source: {update.sourceName} →</a></div></article>)}</section>
 }
-function Dashboard() { return <div className="dashboard-layout"><div className="dashboard-content"><CompetitiveAnalysisPanel/><AIInsights/><section className="metrics">{[['Verified competitor updates', String(recentCompetitorUpdates.length),'official sources only'],['Configured competitors',String(competitors.length),'including market signals'],['Release platforms','4','Workday, ServiceNow, SAP SuccessFactors, Coupa'],['Validation queue','0','no synthetic claims promoted']].map(([label, value, hint]) => <article key={label}><p>{label}<span title={hint}>i</span></p><strong>{value}</strong><small>{hint}</small></article>)}</section><RecentCompetitorFeed/></div><DashboardRail/></div> }
+function XDiscussionWatch() {
+  const [discussion, setDiscussion] = useState<XDiscussion | null>(null)
+  useEffect(() => { fetch(X_DISCUSSION_API).then(response => response.ok ? response.json() : Promise.reject()).then(setDiscussion).catch(() => setDiscussion({ enabled: false, posts: [], message: 'X monitoring is temporarily unavailable.' })) }, [])
+  if (!discussion) return <section className="panel x-watch"><p className="eyebrow">X / TWITTER DISCUSSION WATCH</p><p className="muted">Loading sourced public discussion…</p></section>
+  return <section className="panel x-watch"><div className="panel-heading"><div><p className="eyebrow">X / TWITTER DISCUSSION WATCH · SOURCED POSTS</p><h2>What people are discussing in test automation</h2><p className="muted">{discussion.message}</p></div><span className="watch-status">{discussion.enabled ? 'Official X API' : 'Opt-in source'}</span></div>{discussion.posts.length ? <div className="x-posts">{discussion.posts.map(post => <article key={post.id}><p className="signal-meta">@{post.author} · {new Date(post.created_at).toLocaleString()}</p><p>{post.text}</p><p className="muted">{post.likes} likes · {post.reposts} reposts · {post.replies} replies</p><a href={post.url} target="_blank" rel="noreferrer">View original post on X →</a></article>)}</div> : <div className="empty-source"><strong>No sourced X posts to show.</strong><p>{discussion.enabled ? 'No recent public posts matched the test-automation query.' : 'Add X_BEARER_TOKEN to the backend environment to begin monitoring the last seven days of public X discussion.'}</p></div>}</section>
+}
+function Dashboard() { return <div className="dashboard-layout"><div className="dashboard-content"><CompetitiveAnalysisPanel/><AIInsights/><XDiscussionWatch/><section className="metrics">{[['Verified competitor updates', String(recentCompetitorUpdates.length),'official sources only'],['Configured competitors',String(competitors.length),'including market signals'],['Release platforms','4','Workday, ServiceNow, SAP SuccessFactors, Coupa'],['Validation queue','0','no synthetic claims promoted']].map(([label, value, hint]) => <article key={label}><p>{label}<span title={hint}>i</span></p><strong>{value}</strong><small>{hint}</small></article>)}</section><RecentCompetitorFeed/></div><DashboardRail/></div> }
 
 function Competitors() {
   const [items, setItems] = useState<WorkspaceCompetitor[]>(() => { try { return JSON.parse(localStorage.getItem(COMPETITOR_STORAGE_KEY) || '') } catch { return competitors } })
