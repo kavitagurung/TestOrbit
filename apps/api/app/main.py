@@ -119,7 +119,9 @@ async def ask_research_assistant(payload: ResearchQuery) -> StreamingResponse:
     return StreamingResponse(stream_answer(payload), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 @app.get("/api/v1/automation/schedule", tags=["automation"])
-def read_automation_schedule() -> dict[str, object]:
+async def read_automation_schedule(authorization: str | None = Header(default=None, alias="Authorization")) -> dict[str, object]:
+    """The shared schedule is owner-only; public visitors cannot inspect it."""
+    await require_owner(authorization)
     return schedule_payload(get_schedule())
 
 @app.put("/api/v1/automation/schedule", tags=["automation"])

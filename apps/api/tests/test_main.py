@@ -35,3 +35,7 @@ def test_research_assistant_stream_returns_cited_evidence() -> None:
     assert response.status_code == 200
     assert 'event: complete' in response.text
     assert 'UiPath Agents release notes' in response.text
+
+def test_automation_schedule_is_not_public() -> None:
+    response = client.get('/api/v1/automation/schedule')
+    assert response.status_code in {401, 503}
