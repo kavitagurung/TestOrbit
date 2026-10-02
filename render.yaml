@@ -15,6 +15,16 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: OWNER_EMAIL
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL

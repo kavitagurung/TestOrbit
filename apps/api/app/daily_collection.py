@@ -1,5 +1,7 @@
 """Observable daily public-source collector with deterministic baseline/difference behavior."""
 from datetime import datetime
+import logging
+import httpx
 
 from sqlalchemy import select
 
@@ -9,6 +11,8 @@ from .intelligence import snapshot_hash
 from .live_intelligence import daily_slack_brief
 from .market_discovery import run_market_discovery
 from .slack_delivery import post_slack_notification
+
+logger = logging.getLogger(__name__)
 
 INITIAL_SOURCES = [
     {"competitor": "UiPath", "product": "UiPath Test Cloud / Test Manager", "name": "UiPath cloud and Test Cloud release notes", "url": "https://docs.uipath.com/release-notes/other/latest/release-notes/cloud-platform-july-2026", "source_type": "release_notes"},
@@ -44,6 +48,7 @@ async def run_daily_collection(send_slack: bool = True) -> dict[str, object]:
         ]
     changes: list[dict[str, str]] = []
     failures: list[str] = []
+    failure_details: list[dict[str, object]] = []
     baselines = 0
     for source in sources:
         try:
@@ -57,12 +62,17 @@ async def run_daily_collection(send_slack: bool = True) -> dict[str, object]:
                     changes.append({"competitor": source["competitor"], "title": f"Public source content changed: {source['name']}", "url": source["url"]})
                 if latest is None or latest.content_hash != current_hash:
                     session.add(Snapshot(source_id=source["id"], content_hash=current_hash, excerpt=page["text"][:4000]))
-        except Exception:
+        except Exception as exc:
             failures.append(source["competitor"])
+            code = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else None
+            failure_details.append({"competitor": source["competitor"], "status_code": code, "reason": type(exc).__name__})
+            logger.warning("Source collection failed: source_id=%s reason=%s status=%s", source["id"], type(exc).__name__, code)
     discovery = await run_market_discovery()
     delivered = False
     if send_slack:
         summary, citations = daily_slack_brief(changes)
+        if failures:
+            summary += "\n\nCollection incomplete. Failed sources: " + ", ".join(failures)
         candidates = discovery["signals"]
         if candidates:
             names = ", ".join(signal["company"] for signal in candidates[:5])
@@ -73,4 +83,4 @@ async def run_daily_collection(send_slack: bool = True) -> dict[str, object]:
             summary += f"\n\nX discussion watch: {len(x_posts)} sourced test-automation post(s) were found."
             citations += [str(post["url"]) for post in x_posts[:5] if post.get("url")]
         delivered = await post_slack_notification("TestOrbit daily competitive research", summary, citations)
-    return {"collected_at": datetime.utcnow().isoformat(), "sources_checked": len(sources), "baselines_created": baselines, "changes": changes, "failed_sources": failures, "market_discovery": discovery, "slack_delivered": delivered}
+    return {"collected_at": datetime.utcnow().isoformat(), "sources_checked": len(sources), "baselines_created": baselines, "changes": changes, "failed_sources": failures, "failure_details": failure_details, "market_discovery": discovery, "slack_delivered": delivered}

@@ -23,5 +23,15 @@ jobs:
           TARGET="https://testorbit-api.onrender.com/api/v1/admin/collect/scheduled"
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then TARGET="${TARGET}?force=true"; fi
           curl --fail --silent --show-error \
-            -X POST "${TARGET}" \
+            -X POST "${TARGET}" --output collection-result.json \
             -H "Authorization: Bearer ${OIDC_TOKEN}"
+          python3 - <<'PYCODE'
+          import json
+          from pathlib import Path
+          result = json.loads(Path("collection-result.json").read_text())
+          # Keep credentials and the private schedule out of the public job log.
+          print({key: result.get(key) for key in ("ran", "reason", "sources_checked", "failed_sources", "failure_details", "slack_delivered")})
+          failures = result.get("failed_sources", []) + result.get("market_discovery", {}).get("failed_providers", [])
+          if failures:
+              raise SystemExit("Collection incomplete: " + ", ".join(failures))
+          PYCODE

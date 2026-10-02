@@ -83,7 +83,7 @@ def daily_slack_brief(changes: list[dict[str, str]]) -> tuple[str, list[str]]:
     """Create an understandable, evidence-linked daily Slack briefing."""
     uipath, opkey = VERIFIED_SIGNALS
     workday, coupa = ENTERPRISE_RELEASE_WATCH
-    detected = "No newly detected source-content changes since the last run. The latest verified intelligence is below."
+    detected = "No newly detected source-content changes since the last run. Saved curated background is below; this is not a fresh verification."
     if changes:
         detected = "New source-content changes were detected today: " + "; ".join(
             f"{change['competitor']} — {change['title']}" for change in changes
@@ -92,7 +92,7 @@ def daily_slack_brief(changes: list[dict[str, str]]) -> tuple[str, list[str]]:
         "Hi Kavita 👋",
         "*Your daily competitive research and analysis is ready.*",
         "",
-        "*New in test automation*",
+        "*Saved test-automation background*",
         f"• *UiPath* — {uipath.summary} _Published 15 Jul 2026; verified official release notes._",
         f"• *Opkey* — {opkey.summary} _Official positioning claim; implementation details still require validation._",
         "",
@@ -114,7 +114,8 @@ def daily_slack_brief(changes: list[dict[str, str]]) -> tuple[str, list[str]]:
     ]
     return summary, citations
 
-def today_summary(today: date = date.today()) -> dict[str, object]:
+def today_summary(today: date | None = None) -> dict[str, object]:
+    today = today or date.today()
     today_signals = [signal for signal in VERIFIED_SIGNALS if signal.publication_date == today]
     if not today_signals:
         headline = "No newly verified Opkey or UiPath feature release was found for today in the configured official sources."
