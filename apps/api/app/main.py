@@ -13,6 +13,7 @@ from .delivery import post_teams_notification
 from .slack_delivery import post_slack_notification
 from .database import init_database
 from .daily_collection import run_daily_collection
+from .collection_activity import collection_activity
 from .market_discovery import discover_x_posts, discovery_status
 from .automation import collection_due, get_schedule, mark_collected, require_owner, update_schedule
 from .github_oidc import verify_scheduler_oidc
@@ -22,7 +23,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://kavitagurung.github.io", "http://localhost:5173"],
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PUT"],
     allow_headers=["Content-Type", "Authorization"],
 )
 
@@ -96,6 +97,10 @@ async def get_competitive_analysis(range_days: int = 90) -> dict[str, object]:
     if range_days not in {7, 30, 90}:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="range_days must be 7, 30, or 90")
     return await analyze_competitors(range_days)
+
+@app.get("/api/v1/intelligence/collection-activity", tags=["intelligence"])
+def get_collection_activity() -> dict[str, object]:
+    return collection_activity()
 
 @app.get("/api/v1/discovery/status", tags=["discovery"])
 def get_discovery_status() -> dict[str, object]:

@@ -5,7 +5,7 @@ def test_daily_slack_brief_has_competitor_and_enterprise_sections() -> None:
     summary, citations = daily_slack_brief([])
 
     assert "Hi Kavita" in summary
-    assert "New in test automation" in summary
+    assert "Saved test-automation background" in summary
     assert "UiPath" in summary
     assert "Opkey" in summary
     assert "Enterprise release watch" in summary
